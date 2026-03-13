@@ -1,9 +1,19 @@
 #!/bin/bash
+#PBS -q normal
+#PBS -j oe
+#PBS -l select=1:ncpus=32:ngpus=4
+#PBS -l walltime=24:00:00
+#PBS -N sft
+#PBS -P personal-elim078
+
+module load miniforge3
+conda activate acu
+cd /home/users/ntu/elim078/scratch/open-instruct
 set -a && source .env && set +a
 
 accelerate launch \
     --mixed_precision bf16 \
-    --num_processes 8 \
+    --num_processes 4 \
     --use_deepspeed \
     --deepspeed_config_file configs/ds_configs/stage3_no_offloading_accelerate.conf \
     --deepspeed_multinode_launcher standard \
@@ -20,7 +30,7 @@ accelerate launch \
     --use_flash_attn \
     --max_seq_length 4096 \
     --per_device_train_batch_size 2 \
-    --gradient_accumulation_steps 8 \
+    --gradient_accumulation_steps 16 \
     --learning_rate 3e-5 \
     --lr_scheduler_type linear \
     --warmup_ratio 0.03 \
