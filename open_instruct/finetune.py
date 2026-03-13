@@ -434,7 +434,9 @@ def main(args: FlatArguments, tc: TokenizerConfig):
             },
         )
         wandb_tracker = accelerator.get_tracker("wandb")
-        maybe_update_beaker_description(wandb_url=wandb_tracker.run.url)
+        maybe_update_beaker_description(
+            wandb_url=wandb_tracker.run.url if accelerator.is_main_process else None
+        )
     else:
         wandb_tracker = None  # for later eval launching
 
@@ -886,7 +888,7 @@ def main(args: FlatArguments, tc: TokenizerConfig):
                         current_step=completed_steps,
                         total_steps=args.max_train_steps,
                         start_time=start_time,
-                        wandb_url=wandb_tracker.run.url if wandb_tracker is not None else None,
+                        wandb_url=wandb_tracker.run.url if (wandb_tracker is not None and accelerator.is_main_process) else None,
                     )
                     total_loss = 0
                     total_aux_loss = 0
@@ -901,6 +903,20 @@ def main(args: FlatArguments, tc: TokenizerConfig):
                     if accelerator.is_local_main_process:
                         clean_last_n_checkpoints(args.output_dir, args.keep_last_n_checkpoints)
                     accelerator.wait_for_everyone()
+                    if args.push_to_hub:
+                        checkpoint_hf_dir = os.path.join(args.output_dir, f"hf_step_{completed_steps}")
+                        save_with_accelerate(
+                            accelerator, model, tokenizer, checkpoint_hf_dir, args.use_lora,
+                            chat_template_name=tc.chat_template_name
+                        )
+                        if accelerator.is_main_process:
+                            push_folder_to_hub(
+                                checkpoint_hf_dir,
+                                args.hf_repo_id,
+                                f"{args.hf_repo_revision}_step_{completed_steps}",
+                            )
+                            shutil.rmtree(checkpoint_hf_dir)
+                        accelerator.wait_for_everyone()
 
                 if completed_steps >= args.max_train_steps:
                     break
@@ -940,7 +956,7 @@ def main(args: FlatArguments, tc: TokenizerConfig):
             path=args.output_dir,
             leaderboard_name=args.hf_repo_revision,
             oe_eval_max_length=args.oe_eval_max_length,
-            wandb_url=wandb_tracker.run.url if wandb_tracker is not None else None,
+            wandb_url=wandb_tracker.run.url if (wandb_tracker is not None and accelerator.is_main_process) else None,
             oe_eval_tasks=args.oe_eval_tasks,
         )
     if args.push_to_hub and accelerator.is_main_process:
