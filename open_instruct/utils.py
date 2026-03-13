@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # isort: off
+from __future__ import annotations
+
 import os
 
 # We need to set NCCL_CUMEM_ENABLE=0 for performance reasons; see:
