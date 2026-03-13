@@ -53,9 +53,17 @@ from dataclasses import dataclass
 from multiprocessing import resource_tracker as _rt
 from typing import Any, NewType
 
-import beaker
+try:
+    import beaker
+except ImportError:
+    beaker = None
 import numpy as np
-import ray
+try:
+    import ray
+    from ray.util import state as ray_state
+except ImportError:
+    ray = None
+    ray_state = None
 import requests
 import torch
 import torch.distributed as dist
@@ -65,7 +73,6 @@ from datasets import DatasetDict, concatenate_datasets, load_dataset, load_from_
 from datasets.builder import DatasetGenerationError
 from dateutil import parser
 from huggingface_hub import HfApi
-from ray.util import state as ray_state
 from rich.pretty import pprint
 from tqdm import tqdm
 from transformers import MODEL_FOR_CAUSAL_LM_MAPPING, AutoConfig, HfArgumentParser
