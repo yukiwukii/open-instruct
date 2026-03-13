@@ -4,11 +4,11 @@
 #PBS -l select=1:ncpus=32:ngpus=4
 #PBS -l walltime=24:00:00
 #PBS -N sft
-#PBS -P personal-elim078
+#PBS -P 12004167
 
-module load miniforge3
-conda activate acu
-cd /home/users/ntu/elim078/scratch/open-instruct
+# module load miniforge3
+source scratch/envs/.venv/bin/activate
+cd scratch/open-instruct
 set -a && source .env && set +a
 
 accelerate launch \
@@ -27,7 +27,7 @@ accelerate launch \
     --add_bos \
     --chat_template_name tulu \
     --dataset_mixer_list allenai/tulu-3-sft-olmo-2-mixture-0225 1.0 \
-    --use_flash_attn \
+    # --use_flash_attn \
     --max_seq_length 4096 \
     --per_device_train_batch_size 2 \
     --gradient_accumulation_steps 16 \
@@ -41,5 +41,4 @@ accelerate launch \
     --with_tracking \
     --logging_steps 1 \
     --checkpointing_steps 2000 \
-    --push_to_hub False \
     --seed 1
