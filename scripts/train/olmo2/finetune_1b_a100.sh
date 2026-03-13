@@ -41,5 +41,5 @@ accelerate launch \
     --with_tracking \
     --logging_steps 1 \
     --checkpointing_steps 2000 \
-    --push_to_hub False \
+    --no_try_launch_beaker_eval_jobs \
     --seed 1
