@@ -1,12 +1,14 @@
 #!/bin/bash
 #PBS -q normal
 #PBS -j oe
-#PBS -l select=1:ncpus=32:ngpus=4
-#PBS -l walltime=24:00:00
+#PBS -l select=1:ncpus=64:ngpus=4
+#PBS -l walltime=30:00:00
 #PBS -N sft
 #PBS -P 12004167
 
 # module load miniforge3
+module load cuda/12.2.1
+module load gcc
 source scratch/envs/.venv/bin/activate
 cd scratch/open-instruct
 set -a && source .env && set +a
@@ -27,7 +29,7 @@ accelerate launch \
     --add_bos \
     --chat_template_name tulu \
     --dataset_mixer_list allenai/tulu-3-sft-olmo-2-mixture-0225 1.0 \
-    # --use_flash_attn \
+    --use_flash_attn \
     --max_seq_length 4096 \
     --per_device_train_batch_size 2 \
     --gradient_accumulation_steps 16 \
@@ -40,5 +42,7 @@ accelerate launch \
     --wandb_project_name finetune-1b-sft \
     --with_tracking \
     --logging_steps 1 \
-    --checkpointing_steps 2000 \
-    --seed 1
+    --checkpointing_steps 1000 \
+    --seed 1 \
+    --gradient_checkpointing \
+    --packing
